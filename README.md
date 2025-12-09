@@ -11,8 +11,8 @@ Como se trata de um desafio avançado, você precisará ter autonomia para pesqu
 
 
 - [x] Implementar registro de refeição com nome, descrição, data/hora e indicador dentro da dieta
-- [ ] Desenvolver funcionalidade para editar uma refeição alterando todos os dados
-- [ ] Criar funcionalidade para apagar uma refeição
-- [ ] Implementar listagem de todas as refeições de um usuário
-- [ ] Desenvolver visualização de uma única refeição
-- [ ] Configurar salvamento das informações em banco de dados
+- [X] Desenvolver funcionalidade para editar uma refeição alterando todos os dados
+- [X] Criar funcionalidade para apagar uma refeição
+- [X] Implementar listagem de todas as refeições de um usuário
+- [X] Desenvolver visualização de uma única refeição
+- [X] Configurar salvamento das informações em banco de dados
