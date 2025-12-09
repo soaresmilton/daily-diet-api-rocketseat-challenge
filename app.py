@@ -2,6 +2,7 @@ from flask import Flask, jsonify, request
 from database import db
 from flask_login import LoginManager, login_user, current_user, logout_user, login_required
 from models.user import User
+from models.meal import Meal
 import bcrypt
 
 app = Flask(__name__)
@@ -15,6 +16,7 @@ db.init_app(app)
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
+# API DE USUÁRIOS E AUTENTICAÇÃO
 @login_manager.user_loader
 def load_user(user_id):
   return User.query.get(user_id)
@@ -52,6 +54,8 @@ def create_user():
     db.session.add(user)
     db.session.commit()
     return jsonify({"message": "Usuário criado com sucesso."})
+
+  return jsonify({"message": "Credenciais inválidas"}), 400
   
 @app.route('/user/<int:id_user>', methods=['GET'])
 @login_required
@@ -97,6 +101,78 @@ def delete_user(id_user):
     return jsonify({"message": "Usuário deletado com sucesso."})
   
   return jsonify({"message": "Usuário não encontrado"}), 404
+
+## API DAS REFEIÇÕES - MEAL API
+@app.route('/meal', methods=['POST'])
+@login_required
+def create_meal():
+  data = request.get_json()
+  name = data.get("name")
+  description = data.get("description")
+  date = data.get("date")
+  is_diet = data.get("is_diet")
+
+  if name and description and date:
+    meal = Meal(name=name, description=description, date=date, is_diet=is_diet, id_user=current_user.id)
+    db.session.add(meal)
+    db.session.commit()
+    return jsonify({"message": "Refeição cadastrada com sucesso."})
+
+  return jsonify({"message": "Informações inválidas"}), 400
+
+@app.route('/meal/<id_meal>', methods=['GET'])
+@login_required
+def read_user_meal(id_meal):
+  meal = Meal.query.get(id_meal)
+
+  if meal and meal.id_user == current_user.id:
+    return jsonify({"name": meal.name, "description": meal.description, "date": meal.date.isoformat(), "created": meal.created.isoformat(), "is_diet": meal.is_diet})
+
+  return jsonify({"message": "Refeição não encontrada."}), 404
+
+@app.route('/meals', methods=['GET'])
+@login_required
+def list_all_user_meals():
+  meals =  Meal.query.filter(Meal.id_user == current_user.id).all()
+  meals_list = [meal.to_dict() for meal in meals]
+  if meals:
+    return jsonify({"meals": meals_list, "total": len(meals_list)})
+  
+  return jsonify({"message": "Nenhuma refeição foi encotrada"}), 404
+
+@app.route('/meal/<id_meal>', methods=['PUT'])
+@login_required
+def update_meal(id_meal):
+  meal = Meal.query.get(id_meal)
+
+  if current_user.id != meal.id_user:
+    return jsonify({"message": "Operação não permitida"}), 403
+
+  if meal and meal.id_user == current_user.id:
+    data = request.get_json()
+    meal.name = data.get("name")
+    meal.description = data.get("description")
+    meal.date = data.get("date")
+    meal.is_diet = data.get("is_diet")
+    db.session.commit()
+
+    return jsonify({"message": "Dados da refeição alterados com sucesso."})
+
+  return jsonify({"message": "Refeição não encontrada"}), 404
+
+@app.route('/meal/<id_meal>', methods=['DELETE'])
+@login_required
+def delete_meal(id_meal):
+  meal = Meal.query.get(id_meal)
+
+  if meal.id_user == current_user.id:
+    
+    db.session.delete(meal)
+    db.session.commit()
+
+    return jsonify({"message": "Refeição deletada com sucesso."})
+
+  return jsonify({"message": "Refeição não encontrada"}), 404
 
 if __name__ == '__main__':
   app.run(debug=True)
